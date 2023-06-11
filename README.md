@@ -44,3 +44,5 @@ LOGFILE="$(find "${DOMLOGS}" -type f -iname "${1}.log")"
 Results are limited to the last 24 hours. Eventually I'll add support for specifying a different date range, but for a v0.1, this is pretty complete as it is. I also still need to fix the massive line length for hits per hour. I swear I'll do it soon.
 
 Note that this assumes a default Apache log format. If yours has been edited, the awk positions will need to be swapped around a bit.
+
+A minified version is available to use directly in the shell.
