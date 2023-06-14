@@ -1,38 +1,54 @@
 Alpaca parses the Apache access logs for a domain and shows some useful (imo) info:
 ```
-# alpaca notarealdomain.com
-Fetching stats for notarealdomain.com...
-Log: /usr/local/apache/domlogs/notarealdomain.com.log
+# alpaca thisdomainwasboughtforme.com
+Fetching stats for thisdomainwasboughtforme.com...
+Log: /usr/local/apache/domlogs/thisdomainwasboughtforme.com.log
 
-🎯 Hits (09/Jun/2023):
-     23: 2
+🎯 Hits (13/Jun/2023):
+     03: 41  04: 24  05: 26  06: 26  07: 26  08: 41  09: 40  10: 49  11: 33  12: 33  13: 49  14: 53
+     15: 32  16: 38  17: 40  18: 50  19: 37  20: 45  21: 30  22: 45  23: 27
 
-🎯 Hits (10/Jun/2023):
-     00: 213 01: 11
-
-🎯 Hits (11/Jun/2023):
-     01: 522
+🎯 Hits (14/Jun/2023):
+     00: 90  01: 38  02: 27
 
 💬 Responses:
-     200: 718 404: 30
+     200: 587  404: 352  403: 1
 
 🔗 URIs:
-     718 200 GET /
-      27 404 GET /hello.php
-       2 404 GET /favicon.ico
-       1 404 GET /test.txt
+     572  200  HEAD  /
+     271  404  POST  /xmlrpc.php
+      13  200   GET  /
+       8  404   GET  /wp-login.php
+       2  404   GET  /wp.php
+       2  404   GET  /wp-login.php?action=register
+       2  404   GET  /wp-content/plugins/akismat/contents.php
+       2  404   GET  /index.php
+       2  404   GET  /img/logo.png
+       2  404   GET  /img/logo.jpg
 
 🧔 User Agents:
-     518 "2009 Ford Focus Infotainment System"
-     172 "curl/7.76.1"
-      51 "Mozilla/3.0 (compatible; NetPositive/2.1.1; BeOS)"
-       4 "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0"
-       3 "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.6) Gecko/20070731 BonEcho/2.0.0.6"
+     572  "Webmin"
+     108  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+      44  "Mozlila/5.0 (Linux; Android 7.0; SM-G892A Bulid/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.107 Moblie Safari/537.36"
+      11  "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/533.4 (KHTML, like Gecko) Chrome/5.0.375.99 Safari/533.4"
+       7  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36"
+       6  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"
+       6  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0"
+       5  "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.5) Gecko/20041107 Firefox/1.0"
+       5  "Mozilla/5.0 (Linux; Android 10; LM-X420) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Mobile Safari/537.36"
+       4  "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0"
 
 🌐 IPs:
-     518 23.235.204.195 vps90245.inmotionhosting.com
-     172 5.161.125.23   No PTR record found
-      58 71.126.246.227 pool-71-126-246-227.bstnma.fios.verizon.net
+     572  144.208.64.20   vps92688.inmotionhosting.com
+      44  5.161.126.195   static.195.126.161.5.clients.your-server.de
+      19  148.72.68.227   227.68.72.148.host.secureserver.net
+       8  176.53.85.174   server-176.53.85.174.as42926.net
+       6  66.175.44.24    web164c40.carrierzone.com
+       5  185.244.39.193  185-244-39-193.hosted-by.phanes.cloud
+       4  66.175.44.57    web197c40.carrierzone.com
+       4  66.175.44.55    web195c40.carrierzone.com
+       4  66.175.44.39    web179c40.carrierzone.com
+       4  66.175.44.35    web175c40.carrierzone.com
 ```
 
 You can update the path to the domlogs and what to look for near the top of the file:
