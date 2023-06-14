@@ -1,7 +1,7 @@
 #!/bin/bash
 # alpaca - Get handy Apache stats about a site
 # Nathan Paton <me@tchbnl.com>
-# v0.1 (Updated 6/11/2023)
+# v0.1 (Updated 6/13/2023)
 
 # Nice text formatting
 TEXT_BOLD="\e[1m"
@@ -19,7 +19,7 @@ USAGE: alpaca [DOMAIN]
 }
 
 # Version information
-VERSION="${TEXT_BOLD}alpaca${TEXT_RESET} v0.1 (Updated 6/11/23)"
+VERSION="${TEXT_BOLD}alpaca${TEXT_RESET} v0.1 (Updated 6/13/23)"
 
 # Path to Apache domlogs
 DOMLOGS="/usr/local/apache/domlogs"
@@ -42,7 +42,8 @@ fetch_stuff() {
     # And now we do a swaperoo to a 24-hour window of this log
     # TODO: Add support for specifying a different range
     # TODO: Also add handling if for some reason this is totally empty
-    LOGFILE="$(awk -v TIME="$(date -d '24 hours ago' '+%d/%b/%Y:%H')" '$4 > TIME {print}' "${LOGFILE}")"
+    # TODO: Equal column spacing
+    LOGFILE="$(awk -v TIME="$(date -d '24 hours ago' '+%d/%b/%Y:%H')" -F '[:[]' '$2 ":" $3 > TIME {print}' "${LOGFILE}")"
 
     # Request totals for each hour
     # First we'll split this log further into days (trust me on this):
@@ -59,10 +60,24 @@ fetch_stuff() {
         # More hackery to make the output align nicely
         printf "%5s" ""
 
+        # We want to insert a new line after the 12th hour in the loop below
+        HOURS="0"
+
         # And tada. We then do a while loop to output the hour and count side-by-side.
         # TODO: Find a way to wrap this
         echo "${HITS}" | while read -r COUNT HOUR; do
-            printf "%s: %s " "${HOUR}" "${COUNT}"
+            printf "%s: %s  " "${HOUR}" "${COUNT}"
+
+            # Increment our HOURS...
+            ((HOURS++))
+
+            # And break to a new line if we've reached the 12th
+            if [[ "${HOURS}" -eq 12 ]]; then
+                printf "\n%5s" ""
+
+                # And start over
+                HOURS="0"
+            fi
         done
 
         # And this is just to add some nice spacing
@@ -73,13 +88,14 @@ fetch_stuff() {
     # Top 10 response codes (are there even enough for 10?)
     # Looks like:
     # 200: 429 404: 30 503: 11 etc.
+    # TODO: Equal column spacing
     echo -e "💬 ${TEXT_BOLD}Responses:${TEXT_RESET}"
     TOP_RESPONSES="$(echo "${LOGFILE}" | awk -F '[" ]' '{print $11}' | sort | uniq -c | sort -rn | head -n 10)"
 
     printf "%5s" ""
 
     echo "${TOP_RESPONSES}" | while read -r COUNT RESPONSE; do
-        printf "%s: %s " "${RESPONSE}" "${COUNT}"
+        printf "%s: %s  " "${RESPONSE}" "${COUNT}"
     done
 
     echo
@@ -99,7 +115,7 @@ fetch_stuff() {
         COUNT_WIDTH="$(echo "${TOP_URIS}" | awk '{print length($1)}' | sort -nr | head -n 1)"
         KIND_WIDTH="$(echo "${TOP_URIS}" | awk '{print length($4)}' | sort -nr | head -n 1)"
 
-        printf "%5s%*s %s %*s %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${RESPONSE}" "${KIND_WIDTH}" "${KIND}" "${URI}"
+        printf "%5s%*s  %s  %*s  %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${RESPONSE}" "${KIND_WIDTH}" "${KIND}" "${URI}"
     done
 
     # Top 10 user agents
@@ -111,7 +127,7 @@ fetch_stuff() {
     echo "${TOP_UAS}" | while read -r COUNT UA; do
         COUNT_WIDTH="$(echo "${TOP_UAS}" | awk '{print length($1)}' | sort -nr | head -n 1)"
 
-        printf "%5s%*s %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${UA}"
+        printf "%5s%*s  %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${UA}"
     done
 
     # Top 10 anime betrayal- I mean IPs and their PTR records
@@ -133,7 +149,7 @@ fetch_stuff() {
             PTR="$(dig +short -x "${IP}" | sed 's/\.$//')"
         fi
 
-        printf "%5s%*s %-*s %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${IP_WIDTH}" "${IP}" "${PTR}"
+        printf "%5s%*s  %-*s  %s\n" "" "${COUNT_WIDTH}" "${COUNT}" "${IP_WIDTH}" "${IP}" "${PTR}"
     done
 }
 
