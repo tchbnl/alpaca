@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# alpaca: Simple log parser for Apache domlogs
+# Nathan P. <me@tchbnl.net>
+# 0.1a "Toblerone"
+set -euo pipefail
+
+# Version information
+VERSION='0.1a "Toblerone"'
+
+# Nice text formatting options
+TEXT_BOLD='\e[1m'
+TEXT_UNSET='\e[0m'
+
+# Format for the date command. Default is 'DD/Mon/YYY:HH:SS w/ timezone offset'.
+# DATE_RANGE defaults to 24 hours, but can be changed with --date/-d
+DATE_FORMAT='%d/%b/%Y:%H:%M:%S %z'
+DATE_RANGE='24 hours ago'
+
+# Log positions
+# Change these if using a freaky log format
+# Original LogFormat used:
+# %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"
+# In the future I might try to be more clever and pull from LogFormat directly
+POS_IP=1
+POS_REQUEST=2
+POS_UA=6
+
+# Help message
+show_help() {
+    cat << END_OF_HELP
+$(echo -e "${TEXT_BOLD}")alpaca:$(echo -e "${TEXT_UNSET}") Simple log parser for Apache domlogs
+
+USAGE: alpaca LOG
+    --date -d           Specify an alternate time range (ex: "12 hours ago")
+    --help -h           Show this message
+    --version -v        Show version information
+END_OF_HELP
+}
+
+# Fetch and parse the log file
+fetch_entries() {
+    echo "Getting results from ${*}..."
+
+    # We use the date command to get our start time
+    # You can use -date/-d to specify a different range (ex: 48 hours ago)
+    date_time="$(date -d "${DATE_RANGE}" "+${DATE_FORMAT}")"
+
+    # Get the last X entries and the total count for further user
+    entries="$(awk -F '[][]' -v date="${date_time}" '$2 >= date' "${@}")"
+    entries_total="$(echo "${entries}" | wc -l)"
+
+    # Hits Per Hour in the future would be better
+    echo
+    echo -e "🎯 ${TEXT_BOLD}Total Requests:${TEXT_UNSET} ${entries_total}"
+
+    # Top 10 requested URIs
+    echo
+    echo -e "🔗 ${TEXT_BOLD}URIs:${TEXT_UNSET}"
+
+    # Get our URIs
+    # We only care about GET and POST requests for the sake of my sanity
+    echo "${entries}" \
+        | awk -F '"' -v POS_REQUEST="${POS_REQUEST}" '{print $POS_REQUEST}' \
+        | grep -E '^(GET|POST)' | awk '{print "\"" $0 "\""}' \
+        | sort | uniq -c | sort -rn | head -n 10
+
+    # Top 10 user agents
+    echo
+    echo -e "🧔 ${TEXT_BOLD}User Agents:${TEXT_UNSET}"
+
+    # Get our UAs
+    echo "${entries}" \
+        | awk -F '"' -v POS_UA="${POS_UA}" '{print "\"" $POS_UA "\""}' \
+        | sort | uniq -c | sort -rn | head -n 10
+
+    # Top 10 IPs (and their RDNS!)
+    echo
+    echo -e "🌐 ${TEXT_BOLD}IPs:${TEXT_UNSET}"
+
+    # Get our IPs
+    top_ips="$(echo "${entries}" \
+        | awk -v POS_IP="${POS_IP}" '{print $POS_IP}' \
+        | sort | uniq -c | sort -rn | head -n 10)"
+
+    # Freaky stuff here to iterate each IP for its PTR record
+    echo "${top_ips}" | while IFS= read -r ip; do
+        ip_address="$(echo "${ip}" | awk '{print $2}')"
+
+        # Dig the IP for its PTR record
+        rdns="$(dig -x "${ip_address}" +short | sed 's/\.$//')"
+
+        # And if there's no results from dig...
+        if [[ -z "${rdns}" ]]; then
+            rdns='No PTR record found'
+        fi
+
+        # Tada! Top IPs with a side of RDNS.
+        echo "${ip} (${rdns})"
+    done
+}
+
+# Command options
+while [[ "${#}" -gt 0 ]]; do
+    case "${1}" in
+        --help | -h)
+            show_help
+            exit 0 ;;
+
+        --version | -v)
+            echo -e "${TEXT_BOLD}alpaca${TEXT_UNSET} ${VERSION}"
+            exit 0 ;;
+
+        --date | -d)
+            DATE_RANGE="${2}"
+            shift
+            shift ;;
+
+        -*)
+            echo -e "Not sure what ${1} is supposed to mean..."
+            echo
+            show_help
+            exit 1 ;;
+
+        *)
+            break ;;
+    esac
+done
+
+# For some reason dig isn't always installed on web servers...
+if ! command -v dig >/dev/null; then
+    echo -e "${TEXT_BOLD}alpaca${TEXT_UNSET} requires the dig command"
+    exit 1
+fi
+
+# Show help message and exit if no arguments (like a log path) were passed
+if [[ "${#}" -eq 0 ]]; then
+    show_help
+    exit 1
+fi
+
+# Get our file from the user
+file="${1}"
+
+# And then check if the log file passed exists and has content
+if [[ ! -e "${file}" ]] || [[ ! -s "${file}" ]]; then
+    echo "File doesn't exist or appears to be empty."
+    exit 1
+fi
+
+# And then pass the valid file to FUNCTION if it's valid. Valid.
+fetch_entries "${file}"
