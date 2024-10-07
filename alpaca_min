@@ -1,5 +1,4 @@
 alpaca() {
-set -euo pipefail
 VERSION='0.1a "Toblerone"'
 TEXT_BOLD='\e[1m'
 TEXT_UNSET='\e[0m'
