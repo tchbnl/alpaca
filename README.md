@@ -10,3 +10,7 @@ It uses a mix of the `date` and `awk` commands to do the deed. Positions are var
 A minified version allows for quickly pasting it into a shell without needing to install anything. This is where I reveal it's written in Bash. I'm sorry.
 
 It's probably easy enough to adapt this to Nginx. I might make an Nginx version.
+
+**Didn't you write another script called alpaca that did hits per hour and some other stuff?**
+
+We don't talk about that.
