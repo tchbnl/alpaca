@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # alpaca: Simple log parser for Apache domlogs
 # Nathan P. <me@tchbnl.net>
-# 0.1a "Toblerone"
+# 0.2a "Almond Joy"
 set -euo pipefail
 
 # Version information
-VERSION='0.1a "Toblerone"'
+VERSION='0.2a "Almond Joy"'
 
 # Nice text formatting options
 TEXT_BOLD='\e[1m'
@@ -13,7 +13,7 @@ TEXT_UNSET='\e[0m'
 
 # Format for the date command. Default is 'DD/Mon/YYY:HH:SS w/ timezone offset'.
 # DATE_RANGE defaults to 24 hours, but can be changed with --date/-d
-DATE_FORMAT='%d/%b/%Y:%H:%M:%S %z'
+DATE_FORMAT='%d/%b/%Y:%H:%M:%S'
 DATE_RANGE='24 hours ago'
 
 # Log positions
@@ -41,12 +41,14 @@ END_OF_HELP
 fetch_entries() {
     echo "Getting results from ${*}..."
 
-    # We use the date command to get our start time
+    # We use the date command to get our times
     # You can use -date/-d to specify a different range (ex: 48 hours ago)
-    date_time="$(date -d "${DATE_RANGE}" "+${DATE_FORMAT}")"
+    date_start="$(date -d "${DATE_RANGE}" "+${DATE_FORMAT}")"
+    date_now="$(date "+${DATE_FORMAT}")"
 
     # Get the last X entries and the total count for further user
-    entries="$(awk -F '[][]' -v date="${date_time}" '$2 >= date' "${@}")"
+    entries="$(awk -F '[][]' -v start="${date_start}" -v now="${date_now}" \
+        '$2 >= start && $2 <= now' "${@}")"
     entries_total="$(echo "${entries}" | wc -l)"
 
     # Hits Per Hour in the future would be better
@@ -61,7 +63,7 @@ fetch_entries() {
     # We only care about GET and POST requests for the sake of my sanity
     echo "${entries}" \
         | awk -F '"' -v POS_REQUEST="${POS_REQUEST}" '{print $POS_REQUEST}' \
-        | grep -E '^(GET|POST)' | awk '{print "\"" $0 "\""}' \
+        | awk '{print "\"" $0 "\""}' \
         | sort | uniq -c | sort -rn | head -n 10
 
     # Top 10 user agents
@@ -139,6 +141,7 @@ if [[ "${#}" -eq 0 ]]; then
 fi
 
 # Get our file from the user
+# TODO: Allow piping in files too?
 file="${1}"
 
 # And then check if the log file passed exists and has content

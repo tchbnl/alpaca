@@ -1,8 +1,8 @@
 alpaca() {
-VERSION='0.1a "Toblerone"'
+VERSION='0.2a "Almond Joy"'
 TEXT_BOLD='\e[1m'
 TEXT_UNSET='\e[0m'
-DATE_FORMAT='%d/%b/%Y:%H:%M:%S %z'
+DATE_FORMAT='%d/%b/%Y:%H:%M:%S'
 DATE_RANGE='24 hours ago'
 POS_IP=1
 POS_REQUEST=2
@@ -11,15 +11,17 @@ show_help() {
 cat << END_OF_HELP
 $(echo -e "${TEXT_BOLD}")alpaca:$(echo -e "${TEXT_UNSET}") Simple log parser for Apache domlogs
 USAGE: alpaca LOG
---date -d           Specify an alternate time range (ex: "12 hours ago")
---help -h           Show this message
---version -v        Show version information
+    --date -d           Specify an alternate time range (ex: "12 hours ago")
+    --help -h           Show this message
+    --version -v        Show version information
 END_OF_HELP
 }
 fetch_entries() {
 echo "Getting results from ${*}..."
-date_time="$(date -d "${DATE_RANGE}" "+${DATE_FORMAT}")"
-entries="$(awk -F '[][]' -v date="${date_time}" '$2 >= date' "${@}")"
+date_start="$(date -d "${DATE_RANGE}" "+${DATE_FORMAT}")"
+date_now="$(date "+${DATE_FORMAT}")"
+entries="$(awk -F '[][]' -v start="${date_start}" -v now="${date_now}" \
+'$2 >= start && $2 <= now' "${@}")"
 entries_total="$(echo "${entries}" | wc -l)"
 echo
 echo -e "🎯 ${TEXT_BOLD}Total Requests:${TEXT_UNSET} ${entries_total}"
@@ -27,7 +29,7 @@ echo
 echo -e "🔗 ${TEXT_BOLD}URIs:${TEXT_UNSET}"
 echo "${entries}" \
 | awk -F '"' -v POS_REQUEST="${POS_REQUEST}" '{print $POS_REQUEST}' \
-| grep -E '^(GET|POST)' | awk '{print "\"" $0 "\""}' \
+| awk '{print "\"" $0 "\""}' \
 | sort | uniq -c | sort -rn | head -n 10
 echo
 echo -e "🧔 ${TEXT_BOLD}User Agents:${TEXT_UNSET}"
