@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # alpaca: Simple log parser for Apache domlogs
 # Nathan P. <me@tchbnl.net>
-# 0.2a "Almond Joy"
+# 0.3a
 set -euo pipefail
 
 # Version information
-VERSION='0.2a "Almond Joy"'
+VERSION='0.3a'
 
 # Nice text formatting options
 TEXT_BOLD='\e[1m'
@@ -13,7 +13,8 @@ TEXT_UNSET='\e[0m'
 
 # Format for the date command. Default is 'DD/Mon/YYY:HH:SS w/ timezone offset'.
 # DATE_RANGE defaults to 24 hours, but can be changed with --date/-d
-DATE_FORMAT='%d/%b/%Y:%H:%M:%S'
+# We convert the months in the log to numbers for more robust sorting
+DATE_FORMAT='%d/%b/%Y:%H:%m:%S'
 DATE_RANGE='24 hours ago'
 
 # Log positions
@@ -47,8 +48,22 @@ fetch_entries() {
     date_now="$(date "+${DATE_FORMAT}")"
 
     # Get the last X entries and the total count for further user
-    entries="$(awk -F '[][]' -v start="${date_start}" -v now="${date_now}" \
-        '$2 >= start && $2 <= now' "${@}")"
+    # What the heck is this sed about? We need to convert our months into
+    # numbers so the awk comparison works.
+    entries="$(sed -E 's/\[([0-9]{2})\/Jan\//\[\1\/01\//g;
+                       s/\[([0-9]{2})\/Feb\//\[\1\/02\//g;
+                       s/\[([0-9]{2})\/Mar\//\[\1\/03\//g;
+                       s/\[([0-9]{2})\/Apr\//\[\1\/04\//g;
+                       s/\[([0-9]{2})\/May\//\[\1\/05\//g;
+                       s/\[([0-9]{2})\/Jun\//\[\1\/06\//g;
+                       s/\[([0-9]{2})\/Jul\//\[\1\/07\//g;
+                       s/\[([0-9]{2})\/Aug\//\[\1\/08\//g;
+                       s/\[([0-9]{2})\/Sep\//\[\1\/09\//g;
+                       s/\[([0-9]{2})\/Oct\//\[\1\/10\//g;
+                       s/\[([0-9]{2})\/Nov\//\[\1\/11\//g;
+                       s/\[([0-9]{2})\/Dec\//\[\1\/12\//g' "${@}" | \
+        awk -F '[][]' -v start="${date_start}" -v now="${date_now}" \
+        '$2 >= start && $2 <= now')"
     entries_total="$(echo "${entries}" | wc -l)"
 
     # Hits Per Hour in the future would be better
@@ -60,7 +75,6 @@ fetch_entries() {
     echo -e "🔗 ${TEXT_BOLD}URIs:${TEXT_UNSET}"
 
     # Get our URIs
-    # We only care about GET and POST requests for the sake of my sanity
     echo "${entries}" \
         | awk -F '"' -v POS_REQUEST="${POS_REQUEST}" '{print $POS_REQUEST}' \
         | awk '{print "\"" $0 "\""}' \
